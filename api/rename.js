@@ -1,15 +1,8 @@
-// index.js
-const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config();
-
-const app = express();
-app.use(express.json());
 
 const CONFIG = {
   maxTitleLength: 50,
-  apiKey: process.env.GEMINI_API_KEY, // API key from environment variables
-  renameInterval: 1800000, // 30 minutes
+  apiKey: process.env.GEMINI_API_KEY, 
 };
 
 const genAI = new GoogleGenerativeAI(CONFIG.apiKey);
@@ -20,7 +13,6 @@ const generationConfig = {
   topP: 0.95,
   topK: 40,
   maxOutputTokens: 8192,
-  
 };
 
 async function fetchAITitle(originalTitle) {
@@ -42,18 +34,12 @@ async function fetchAITitle(originalTitle) {
   }
 }
 
-// API endpoint to rename a title
-app.post('/api/rename', async (req, res) => {
-  const originalTitle = req.body.title;
-  const newTitle = await fetchAITitle(originalTitle);
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const { title } = req.body;
+  const newTitle = await fetchAITitle(title);
   res.json({ newTitle });
-});
-
-// (Optional) Define a root route so you don’t get "Cannot GET /" when visiting the base URL.
-app.get('/', (req, res) => {
-  res.send('Gemini Proxy Server is running!');
-});
-
-// Start the server on the port provided by Render (or default 3000)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+};
